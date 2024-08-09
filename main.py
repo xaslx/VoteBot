@@ -1,23 +1,17 @@
-import os
-from aiogram import F, Bot, Dispatcher
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
+from aiogram import Bot, Dispatcher
 import asyncio
 import logging
 from config import settings
 from app.handlers import router
 
-TOKEN_BOT: str = settings.TOKEN_BOT
-
-
-
-bot: Bot = Bot(token=TOKEN_BOT)
-dp: Dispatcher = Dispatcher()
-
 
 
 
 async def main():
+
+    bot: Bot = Bot(token=settings.TOKEN_BOT)
+    dp: Dispatcher = Dispatcher()
+
     dp.include_router(router)
     await dp.start_polling(bot)
 

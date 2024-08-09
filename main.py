@@ -5,7 +5,7 @@ from aiogram.types import Message
 import asyncio
 import logging
 from config import settings
-
+from app.handlers import router
 
 TOKEN_BOT: str = settings.TOKEN_BOT
 
@@ -18,6 +18,7 @@ dp: Dispatcher = Dispatcher()
 
 
 async def main():
+    dp.include_router(router)
     await dp.start_polling(bot)
 
 

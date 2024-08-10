@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 aiogram = "^3.10.0"
 pydantic-settings = "^2.4.0"
+redis = "^5.0.8"
 
 
 [build-system]

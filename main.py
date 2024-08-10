@@ -1,4 +1,5 @@
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 import asyncio
 import logging
 from config import settings
@@ -9,7 +10,7 @@ from aiogram.fsm.storage.redis import RedisStorage, Redis
 
 async def main():
 
-    bot: Bot = Bot(token=settings.TOKEN_BOT)
+    bot: Bot = Bot(token=settings.TOKEN_BOT, default=DefaultBotProperties(parse_mode='HTML'))
     redis: Redis = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
     storage: RedisStorage = RedisStorage(redis=redis)
 

@@ -6,6 +6,3 @@ class Poll(StatesGroup):
     title: State = State()
     one_answer: State = State()
     two_answer: State = State()
-    
-class CancelPoll(StatesGroup):
-    description: State = State()

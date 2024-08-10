@@ -8,6 +8,8 @@ from aiogram.fsm.state import default_state
 from config import settings
 from app.schema import Poll, CancelPoll
 
+
+
 router: Router = Router()
 
 
@@ -56,20 +58,28 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.set_state(Poll.title)
     await message.answer(f'Напишите вопрос для опроса')
 
-@router.message(StateFilter(Poll.title), lambda x: isinstance(x.text, str))
+@router.message(StateFilter(Poll.title), F.text)
 async def poll_title(message: Message, state: FSMContext):
     await state.update_data(title=message.text)
     await message.answer('Отправь 1 ответ')
     await state.set_state(Poll.one_answer)
 
-@router.message(StateFilter(Poll.one_answer), lambda x: isinstance(x.text, str))
+@router.message(StateFilter(Poll.title), ~F.text)
+async def poll_title_warning(message: Message):
+    await message.answer('Вопрос должен состоять только из текста.\nЕсли хотите отменить создание опроса - введите /cancel')
+
+@router.message(StateFilter(Poll.one_answer), F.text)
 async def poll_one_answer(message: Message, state: FSMContext):
     await state.update_data(one_answer=message.text)
     await message.answer('Отправь 2 ответ')
     await state.set_state(Poll.two_answer)
 
+@router.message(StateFilter(Poll.one_answer), ~F.text)
+async def poll_one_answer_warning(message: Message):
+    await message.answer('Ответ должен состоять только из текста.\nЕсли хотите отменить создание опроса - введите /cancel')
 
-@router.message(StateFilter(Poll.two_answer), lambda x: isinstance(x.text, str))
+
+@router.message(StateFilter(Poll.two_answer), F.text)
 async def poll_two_answer(message: Message, state: FSMContext):
     await state.update_data(two_answer=message.text)
     info: dict = await state.get_data()
@@ -93,6 +103,9 @@ async def poll_two_answer(message: Message, state: FSMContext):
     await message.answer('Ваш опрос отправлен на модерацию.')
     await state.clear()
 
+@router.message(StateFilter(Poll.two_answer), ~F.text)
+async def poll_two_answer_warning(message: Message):
+    await message.answer('Ваш опрос отправлен на модерацию.')
 
 
 @router.callback_query(F.data.startswith('cancel'))

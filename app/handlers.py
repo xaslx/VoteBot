@@ -89,7 +89,7 @@ async def poll_two_answer(message: Message, state: FSMContext, bot: Bot):
     )
     
     #for admin
-    await message.bot.send_message(chat_id=settings.ID_ADMINS_GROUP, text=f'Пользователь @{message.from_user.username} отправил опрос на проверку.')
+    await message.bot.send_message(chat_id=settings.ID_ADMINS_GROUP, text=f'Пользователь {message.from_user.id} отправил опрос на проверку.')
     await message.bot.send_poll(
             chat_id=settings.ID_ADMINS_GROUP, 
             question=info['title'],
@@ -147,7 +147,6 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
         options=[one_answer, two_answer],
     )
 
-    
 
 @router.message(StateFilter(default_state))
 async def echo(message: Message):

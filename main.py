@@ -14,7 +14,7 @@ async def start_bot():
     await start_db()
 
 async def stop_bot():
-    await connection.close()
+    connection.close()
 
 
 async def main():

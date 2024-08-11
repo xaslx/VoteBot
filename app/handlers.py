@@ -83,8 +83,15 @@ async def poll_two_answer(message: Message, state: FSMContext, bot: Bot):
     await state.update_data(two_answer=message.text)
 
     info: dict = await state.get_data()
-    username: str = message.from_user.username if not None else str(message.from_user.id)
-    id_in_db: int = await insert_poll(username, message.from_user.id, info['title'], info['one_answer'], info['two_answer'], accepted=0, canceled=0)
+    username: str = message.from_user.username if message.from_user.username else str(message.from_user.id)
+    id_in_db: int = await insert_poll(
+        username, 
+        message.from_user.id, 
+        info['title'], 
+        info['one_answer'], 
+        info['two_answer'], 
+        accepted=0, 
+        canceled=0)
 
     inline_kb: InlineKeyboardMarkup = await get_inline_kb(
         id_db=id_in_db

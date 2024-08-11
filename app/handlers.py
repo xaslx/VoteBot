@@ -94,6 +94,16 @@ async def poll_answers(message: Message, state: FSMContext):
     data: dict[str, str | list[str]] = await state.get_data()
     answers: list[str] = data.get("answers", [])
 
+    if message.text.startswith("/") and message.text.lower() not in ["/done", "/cancel"]:
+        await message.answer(
+            'Ответ не должен начинаться на /\n'
+            'Сейчас доступны только:\n\n'
+            '/done - завершить создание опроса, и отправить на проверку\n'
+            '/cancel - отменить создание опроса'
+        )
+        
+        return
+    
     if message.text.lower() == "/done":
         await done_command(message, state)
         return
@@ -112,6 +122,10 @@ async def poll_answers(message: Message, state: FSMContext):
         f"Если хотите отменить создание опроса - введите /cancel"
     )
 
+
+@router.message(StateFilter(Poll.answers), ~F.text)
+async def poll_answers_warning(message: Message):
+    await message.answer('<b>Ответ должен быть в виде текста</b>')
 
 @router.callback_query(F.data.startswith("cancel"))
 async def cancel(callback: CallbackQuery, state: FSMContext):
@@ -160,6 +174,10 @@ async def accept(callback: CallbackQuery, state: FSMContext):
             chat_id=settings.CHANNEL_ID,
             question=poll["title"],
             options=poll["answers"],
+        )
+        await callback.bot.send_message(
+            chat_id=settings.CHANNEL_ID,
+            text=f'Отправлено с помощью <a href="https://t.me/vote_for_group_bot">бота</a>'
         )
 
         await accept_poll(poll_id=id_in_db)

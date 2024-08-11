@@ -1,5 +1,4 @@
-from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton, 
-                           InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButtonPollType)
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 

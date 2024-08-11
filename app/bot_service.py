@@ -1,9 +1,9 @@
-from aiogram.types import Message, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
+from aiogram.types import InlineKeyboardMarkup, Message
+
 from app.db_service import insert_poll
 from app.keyboards import get_inline_kb
 from config import settings
-
 
 
 async def add_poll_in_db(message: Message, state: FSMContext, data: dict, answers: list[str]):

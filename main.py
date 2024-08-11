@@ -1,13 +1,14 @@
-from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
 import asyncio
 import logging
-from config import settings
-from app.handlers import router
-from aiogram.fsm.storage.redis import RedisStorage, Redis
-from database import connection
-from app.db_service import start_db
 
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.redis import Redis, RedisStorage
+
+from app.db_service import start_db
+from app.handlers import router
+from config import settings
+from database import connection
 
 
 async def start_bot():

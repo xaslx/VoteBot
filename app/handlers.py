@@ -1,13 +1,13 @@
-from aiogram import F, Router, Bot
-from aiogram.filters import CommandStart, Command, StateFilter
-from aiogram.types import Message, CallbackQuery
-from config import settings
+from aiogram import Bot, F, Router
+from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from config import settings
-from app.schema import Poll
-from app.db_service import find_poll, accept_poll, cancel_poll
+from aiogram.types import CallbackQuery, Message
+
 from app.bot_service import add_poll_in_db
+from app.db_service import accept_poll, cancel_poll, find_poll
+from app.schema import Poll
+from config import settings
 
 router: Router = Router()
 

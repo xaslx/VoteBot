@@ -8,7 +8,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from config import settings
 from app.schema import Poll
-
+from database import connection, cursor
+from app.db_service import insert_poll, find_poll, accept_poll, cancel_poll
 
 
 router: Router = Router()
@@ -76,20 +77,21 @@ async def poll_one_answer_warning(message: Message):
     await message.answer('Ответ должен состоять только из текста.\nЕсли хотите отменить создание опроса - введите /cancel')
 
 
+
 @router.message(StateFilter(Poll.two_answer), F.text)
 async def poll_two_answer(message: Message, state: FSMContext, bot: Bot):
     await state.update_data(two_answer=message.text)
 
     info: dict = await state.get_data()
+    username: str = message.from_user.username if not None else str(message.from_user.id)
+    id_in_db: int = await insert_poll(username, message.from_user.id, info['title'], info['one_answer'], info['two_answer'], accepted=0, canceled=0)
+
     inline_kb: InlineKeyboardMarkup = await get_inline_kb(
-        user_id=message.from_user.id, 
-        title=info['title'], 
-        one_answer=info['one_answer'], 
-        two_answer=message.text,
+        id_db=id_in_db
     )
-    
+
     #for admin
-    await message.bot.send_message(chat_id=settings.ID_ADMINS_GROUP, text=f'Пользователь {message.from_user.id} отправил опрос на проверку.')
+    await message.bot.send_message(chat_id=settings.ID_ADMINS_GROUP, text=f'Пользователь {username} отправил опрос на проверку.')
     await message.bot.send_poll(
             chat_id=settings.ID_ADMINS_GROUP, 
             question=info['title'],
@@ -121,31 +123,40 @@ async def poll_two_answer_warning(message: Message):
 
 @router.callback_query(F.data.startswith('cancel'))
 async def cancel(callback: CallbackQuery, state: FSMContext):
-    user_id: int = int(callback.data.split(":")[1])
-    await callback.message.delete_reply_markup()
-    await callback.bot.send_message(chat_id=user_id, text="Ваш опрос был отклонен модератором.")
-    await callback.answer("Опрос отклонен.")
-    await callback.message.answer(f'Администратор @{callback.from_user.username} , отклонил опрос ❌')
+    id_in_db: int = int(callback.data.split(":")[1])
+    poll: dict = await find_poll(poll_id=id_in_db)
+    if poll['canceled'] == 0:
+        await callback.message.delete_reply_markup()
+        await callback.bot.send_message(chat_id=poll['user_id'], text="Ваш опрос был отклонен модератором.")
+        await callback.answer("Опрос отклонен.")
+        await callback.message.answer(f'Администратор @{callback.from_user.username} , отклонил опрос ❌')
+        await cancel_poll(poll_id=id_in_db)
+    else:
+        await callback.answer('Опрос уже был отклонен одним из модераторов')
 
 
 @router.callback_query(F.data.startswith('accept'))
 async def cancel(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.delete_reply_markup()
-    data: list[str] = callback.data.split(":")
-    user_id: int = int(data[1])
-    title: str = data[2]
-    one_answer: str = data[3]
-    two_answer: str = data[4]
+    id_in_db: int = int(callback.data.split(":")[1])
+    poll: dict = await find_poll(poll_id=id_in_db)
+    user_id: int = int(poll['user_id'])
+    title: str = poll['title']
+    one_answer: str = poll['one_answer']
+    two_answer: str = poll['two_answer']
 
-    
-    await callback.bot.send_message(chat_id=user_id, text="Ваш опрос был принят модерацией, и скоро появится на канале.")
-    await callback.message.answer(f'Администратор @{callback.from_user.username} , проверил и одобрил опрос ✅')
-    await callback.bot.send_poll(
-        chat_id=settings.CHANNEL_ID, 
-        question=title,
-        options=[one_answer, two_answer],
-    )
+    if poll['accepted'] == 0:
+        await callback.bot.send_message(chat_id=user_id, text="Ваш опрос был принят модерацией, и скоро появится на канале.")
+        await callback.message.answer(f'Администратор @{callback.from_user.username} , проверил и одобрил опрос ✅')
+        await callback.bot.send_poll(
+            chat_id=settings.CHANNEL_ID, 
+            question=title,
+            options=[one_answer, two_answer],
+        )
+        await accept_poll(poll_id=id_in_db)
+    else:
+        await callback.answer('Опрос уже был принят одним из модераторов')
 
 
 @router.message(StateFilter(default_state))

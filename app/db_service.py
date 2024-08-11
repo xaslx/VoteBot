@@ -7,25 +7,41 @@ async def start_db():
     user_id INTEGER NOT NULL,
     username TEXT NOT NULL,
     title TEXT NOT NULL,
-    one_answer TEXT NOT NULL,
-    two_answer TEXT NOT NULL,
     accepted BOOLEAN DEFAULT 0,
     canceled BOOLEAN DEFAULT 0
-);""")
+    );""")
+
+    cursor.execute("""CREATE TABLE IF NOT EXISTS poll_answers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    poll_id INTEGER NOT NULL,
+    answer TEXT NOT NULL,
+    FOREIGN KEY (poll_id) REFERENCES poll (id) ON DELETE CASCADE
+    );""")
+    
     connection.commit()
 
 
-async def insert_poll(username: str, user_id: int, title: str, one_answer: str, two_answer: str, accepted: int, canceled: int) -> int:
+async def insert_poll(username: str, user_id: int, title: str, answers: list[str], accepted: int, canceled: int) -> int:
+
     cursor.execute('''
-        INSERT INTO poll (username, user_id, title, one_answer, two_answer, accepted, canceled)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (username, user_id, title, one_answer, two_answer, accepted, canceled))
-    new_id: int = cursor.lastrowid
-    connection.commit()
-    return new_id 
+        INSERT INTO poll (username, user_id, title, accepted, canceled)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (username, user_id, title, accepted, canceled))
+    
+    new_poll_id: int = cursor.lastrowid
     
 
-async def find_poll(poll_id: int) -> dict:
+    cursor.executemany('''
+        INSERT INTO poll_answers (poll_id, answer)
+        VALUES (?, ?)
+    ''', [(new_poll_id, answer) for answer in answers])
+    
+    connection.commit()
+    return new_poll_id
+
+
+async def find_poll(poll_id: int) -> dict[str, str | list[str]]:
+
     cursor.execute('''
         SELECT * FROM poll WHERE id = ?
     ''', (poll_id,))
@@ -35,18 +51,26 @@ async def find_poll(poll_id: int) -> dict:
     if poll is None:
         return None
 
-    poll_data = {
+
+    cursor.execute('''
+        SELECT answer FROM poll_answers WHERE poll_id = ?
+    ''', (poll_id,))
+    
+    answers = cursor.fetchall()
+
+
+    poll_data: dict[str, str | list[str]] = {
         "id": poll[0],
         "user_id": poll[1],
         "username": poll[2],
         "title": poll[3],
-        "one_answer": poll[4],
-        "two_answer": poll[5],
-        "accepted": poll[6],
-        "canceled": poll[7]
+        "answers": [answer[0] for answer in answers], 
+        "accepted": poll[4],
+        "canceled": poll[5]
     }
     
     return poll_data
+
 
 async def accept_poll(poll_id: int) -> None:
     cursor.execute('''
@@ -56,6 +80,7 @@ async def accept_poll(poll_id: int) -> None:
     ''', (poll_id,))
     
     connection.commit()
+
 
 async def cancel_poll(poll_id: int) -> None:
     cursor.execute('''

@@ -178,7 +178,8 @@ async def accept(callback: CallbackQuery, state: FSMContext):
         )
         await callback.bot.send_message(
             chat_id=poll["user_id"],
-            text="<b>Ваш опрос был принят модерацией, и скоро появится на</b> <a href='https://t.me/oprosnik_channel>канале</a>.",
+            text="<b>Ваш опрос был принят модерацией, и скоро появится на</b> <a href='https://t.me/oprosnik_channel'>канале</a>.",
+            disable_web_page_preview=True
         )
         await callback.message.answer(
             f"Администратор {username} , проверил и одобрил опрос ✅"

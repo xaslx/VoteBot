@@ -16,7 +16,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 
 
 sentry_sdk.init(
-    dsn=settings.dsn,
+    dsn=settings.DSN,
     traces_sample_rate=1.0,
     profiles_sample_rate=1.0,
 )

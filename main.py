@@ -12,6 +12,7 @@ from config import settings
 from database import connection
 import sentry_sdk
 from sqlite3 import OperationalError
+from aiogram.client.session.aiohttp import AiohttpSession
 
 
 sentry_sdk.init(
@@ -39,9 +40,11 @@ async def stop_bot():
 
 
 async def main():
-
+    session: AiohttpSession = AiohttpSession(proxy='http://proxy.server:3128') #для деплоя pythonanywhere
     bot: Bot = Bot(
-        token=settings.TOKEN_BOT, default=DefaultBotProperties(parse_mode="HTML")
+        token=settings.TOKEN_BOT, 
+        default=DefaultBotProperties(parse_mode="HTML"),
+        session=session
     )
     redis: Redis = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
     storage: RedisStorage = RedisStorage(redis=redis)

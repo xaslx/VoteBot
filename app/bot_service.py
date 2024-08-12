@@ -10,7 +10,7 @@ async def add_poll_in_db(
     message: Message, state: FSMContext, data: dict, answers: list[str]
 ):
     username: str = (
-        message.from_user.username
+        f'@{message.from_user.username}'
         if message.from_user.username
         else message.from_user.first_name
     )

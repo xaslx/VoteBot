@@ -62,6 +62,20 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.message(StateFilter(Poll.title), F.text)
 async def poll_title(message: Message, state: FSMContext):
+    if message.text.startswith("/") and message.text.lower() not in ["/done", "/cancel"]:
+        await message.answer(
+            '<b>Вопрос не должен начинаться на / </b>\n'
+            '<b>Сейчас доступно только:</b>\n\n'
+            '/done - завершить создание опроса, и отправить на проверку\n'
+            '/cancel - отменить создание опроса'
+        )
+        
+        return
+    
+    if message.text.lower() == "/done":
+        await message.answer('Вы не добавили вопрос, а также ответы.')
+        return
+    
     await state.update_data(title=message.text)
     await state.update_data(answers=[])
     await message.answer(
@@ -96,8 +110,8 @@ async def poll_answers(message: Message, state: FSMContext):
 
     if message.text.startswith("/") and message.text.lower() not in ["/done", "/cancel"]:
         await message.answer(
-            'Ответ не должен начинаться на /\n'
-            'Сейчас доступны только:\n\n'
+            '<b>Ответ не должен начинаться на / </b>\n'
+            '<b>Сейчас доступно только:</b>\n\n'
             '/done - завершить создание опроса, и отправить на проверку\n'
             '/cancel - отменить создание опроса'
         )
@@ -110,7 +124,7 @@ async def poll_answers(message: Message, state: FSMContext):
 
     if len(answers) >= 10:
         await message.answer(
-            "<b>Вы достигли максимального количества вариантов ответа (10).</b>\n Завершите ввод командой /done."
+            "<b>Вы достигли максимального количества вариантов ответа (10).</b>\n Завершите ввод командой /done.\nили /cancel - если хотите отменить"
         )
         return
 
@@ -134,7 +148,7 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
 
     if poll["canceled"] == 0:
         username: str = (
-            callback.from_user.username
+            f'@{callback.from_user.username}'
             if callback.from_user.username
             else callback.from_user.first_name
         )
@@ -158,7 +172,7 @@ async def accept(callback: CallbackQuery, state: FSMContext):
 
     if poll["accepted"] == 0:
         username: str = (
-            callback.from_user.username
+            f'@{callback.from_user.username}'
             if callback.from_user.username
             else callback.from_user.first_name
         )
@@ -177,7 +191,8 @@ async def accept(callback: CallbackQuery, state: FSMContext):
         )
         await callback.bot.send_message(
             chat_id=settings.CHANNEL_ID,
-            text=f'Отправлено с помощью <a href="https://t.me/vote_for_group_bot">бота</a>'
+            text=f'Отправить свой опрос/голосование можно через <a href="https://t.me/vote_for_group_bot">бота</a>',
+            disable_web_page_preview=True
         )
 
         await accept_poll(poll_id=id_in_db)

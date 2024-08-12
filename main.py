@@ -1,5 +1,5 @@
 import asyncio
-import logging
+from logger import logger
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -7,16 +7,35 @@ from aiogram.fsm.storage.redis import Redis, RedisStorage
 
 from app.db_service import start_db
 from app.handlers import router
+from app.keyboards import set_main_menu
 from config import settings
 from database import connection
+import sentry_sdk
+from sqlite3 import OperationalError
+
+
+sentry_sdk.init(
+    dsn=settings.dsn,
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+)
+
+
+
 
 
 async def start_bot():
-    await start_db()
+    try:
+        await start_db()
+    except OperationalError:
+        logger.error('Ошибка создания таблиц в базе данных, при запуске бота.')
+        raise OperationalError('Не удалось создать таблицы')
+    logger.info('Бот запущен')
 
 
 async def stop_bot():
     connection.close()
+    logger.info('Бот выключен')
 
 
 async def main():
@@ -30,10 +49,13 @@ async def main():
     dp: Dispatcher = Dispatcher(storage=storage)
     dp.include_router(router)
     dp.startup.register(start_bot)
+    dp.startup.register(set_main_menu)
     dp.shutdown.register(stop_bot)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info('Остановка бота')

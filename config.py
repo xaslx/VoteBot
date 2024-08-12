@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
     ID_ADMINS_GROUP: str
+    dsn: str
+    LOG_LEVEL: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
